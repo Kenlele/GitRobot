@@ -4,7 +4,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 
 repo_path = ""
-git_initialized = False  # 用於追蹤是否已經執行 Git Init
+git_initialized = False  # 紀錄是否執行了 git init
 
 def run_git_command(command):
     """執行 Git 指令"""
@@ -31,6 +31,7 @@ def git_init():
         git_initialized = True
         entry_url.config(state="normal")  # 允許輸入 Repo URL
         btn_remote.config(state="normal")  # 允許按下「連結 GitHub Repo」
+        entry_branch.config(state="normal")  # 允許輸入分支名稱
 
 def git_remote_add():
     """設定 GitHub 遠端連結"""
@@ -40,14 +41,17 @@ def git_remote_add():
     else:
         messagebox.showerror("❌ 錯誤", "請輸入 GitHub Repo 連結！")
 
+def git_pull():
+    """Pull 最新版本"""
+    run_git_command("git pull origin main")
+
 def git_push():
-    """Push 到 GitHub，並根據是否有 README.md 來決定是否先 Pull"""
-    if checkbox_var.get():
-        # 先 Pull 遠端的 README.md，避免 push 失敗
-        run_git_command("git pull origin main --rebase")
-    
-    # 進行 Push
-    run_git_command("git add . && git commit -m 'Auto commit' && git push origin main")
+    """Push 到 GitHub，使用者可選擇 Branch"""
+    branch = entry_branch.get()
+    if not branch:
+        messagebox.showerror("❌ 錯誤", "請輸入分支名稱！")
+        return
+    run_git_command(f"git add . && git commit -m 'Auto commit' && git push origin {branch}")
 
 def git_clone():
     """Clone GitHub Repo"""
@@ -57,14 +61,10 @@ def git_clone():
     else:
         messagebox.showerror("❌ 錯誤", "請輸入 GitHub Repo 連結！")
 
-def git_pull():
-    """Pull 最新版本"""
-    run_git_command("git pull origin main")
-
 # 設定 Tkinter 介面
 root = tk.Tk()
 root.title("GitHub 小機器人")
-root.geometry("620x500")  # 增加視窗大小
+root.geometry("650x520")  # 調整視窗大小
 root.configure(bg="#F8F8F8")  # 設定背景色
 
 # **第一區**（Push 專案到 GitHub）
@@ -92,9 +92,21 @@ entry_url.pack(side="left", pady=5)
 btn_remote = tk.Button(frame_push, text="🔗 連結 GitHub Repo", command=git_remote_add, width=25, height=1, bg="#2196F3", fg="black", font=("Arial", 12), state="disabled")
 btn_remote.pack(pady=5)
 
-checkbox_var = tk.BooleanVar()
-checkbox_readme = tk.Checkbutton(frame_push, text="✅ 這個 Repo 有 README.md", variable=checkbox_var, bg="white", font=("Arial", 12))
-checkbox_readme.pack()
+# **新增 Pull 最新版本**
+btn_pull = tk.Button(frame_push, text="🔄 Pull 最新版本", command=git_pull, width=25, height=1, bg="#009688", fg="black", font=("Arial", 12))
+btn_pull.pack(pady=5)
+
+label_pull_hint = tk.Label(frame_push, text="📝 如果你的 Repo 內有 README.md，請先 Pull！", bg="white", font=("Arial", 10), fg="red")
+label_pull_hint.pack()
+
+frame_branch = tk.Frame(frame_push, bg="white")
+frame_branch.pack()
+
+label_branch = tk.Label(frame_branch, text="🌿 輸入你要推送的 Branch:", bg="white", font=("Arial", 10))
+label_branch.pack(side="left")
+
+entry_branch = tk.Entry(frame_branch, width=20, font=("Arial", 12), state="disabled")
+entry_branch.pack(side="left", pady=5)
 
 btn_push = tk.Button(frame_push, text="🚀 Push 到 GitHub", command=git_push, width=25, height=1, bg="#FF5722", fg="black", font=("Arial", 12))
 btn_push.pack(pady=5)
