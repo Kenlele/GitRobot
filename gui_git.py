@@ -6,16 +6,15 @@ from tkinter import filedialog, messagebox
 repo_path = ""
 git_initialized = False  # 紀錄是否執行了 git init
 
+import subprocess
+
 def run_git_command(command):
-    """執行 Git 指令"""
-    
-    process = subprocess.run(command, shell=True, cwd=repo_path, capture_output=True, text=True)
-    if process.returncode == 0:
-        messagebox.showinfo("✅ 成功", f"執行成功：\n{process.stdout}")
-        return True
-    else:
-        messagebox.showerror("❌ 錯誤", f"執行失敗：\n{process.stderr}")
-        return False
+    """執行 Git 指令，回傳輸出結果"""
+    try:
+        result = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT, text=True)
+        return result.strip()  # 確保回傳的是字串
+    except subprocess.CalledProcessError as e:
+        return f"error: {e.output}"  # 把錯誤當作字串回傳
 
 def select_folder():
     """選擇本地端專案資料夾"""
@@ -47,24 +46,46 @@ def git_pull():
     run_git_command("git pull origin main")
 
 def git_push():
-    """Push 到 GitHub，先檢查未提交的變更"""
-    branch = entry_branch.get()
+    """Push 到 GitHub，確保遠端連結正確"""
+    repo_url = entry_url.get().strip()   # 使用者輸入的 GitHub 連結
+    branch = entry_branch.get().strip()  # 使用者輸入的分支名稱
     if not branch:
-        messagebox.showerror("❌ 錯誤", "請輸入分支名稱！")
+        branch = "main"  # 預設 main 分支
+
+    if not repo_url:
+        messagebox.showerror("❌ 錯誤", "請輸入 GitHub Repo 連結！")
         return
 
-    # 檢查是否有未提交的變更
+    # **1️⃣ 初始化 Git**
+    run_git_command("git init")
+
+    # **2️⃣ 確保有遠端倉庫**
+    remote_check = run_git_command("git remote -v")
+    if isinstance(remote_check, str) and "origin" not in remote_check:
+        run_git_command(f"git remote add origin {repo_url}")
+
+    # **3️⃣ 確保有該分支**
+    branches = run_git_command("git branch")
+    if isinstance(branches, str) and branch not in branches:
+        run_git_command(f"git checkout -b {branch}")
+
+    # **4️⃣ 先 Pull 遠端，避免衝突**
+    pull_result = run_git_command(f"git pull origin {branch} --allow-unrelated-histories")
+    if isinstance(pull_result, str) and "error" in pull_result.lower():
+        messagebox.showerror("❌ Pull 失敗", "請確認遠端是否允許 Pull！")
+
+    # **5️⃣ 檢查是否有未提交的變更**
     run_git_command("git add .")
-    success_commit = run_git_command("git commit -m 'Auto commit'")
+    commit_output = run_git_command("git commit -m 'Auto commit'")
+    if isinstance(commit_output, str) and "nothing to commit" in commit_output:
+        messagebox.showinfo("✅ 沒有變更", "沒有變更可提交，直接 Push！")
 
-    # 這裡要確保 success_commit 是字串
-    if success_commit and isinstance(success_commit, str) and "nothing to commit" in success_commit:
-        messagebox.showinfo("✅ 已同步", "沒有變更可提交，直接 Push！")
-
-    # 執行 Push
-    success_push = run_git_command(f"git push origin {branch}")
-    if success_push and isinstance(success_push, str) and "error" in success_push:
+    # **6️⃣ 執行 Push**
+    push_output = run_git_command(f"git push -u origin {branch}")
+    if isinstance(push_output, str) and "error" in push_output:
         messagebox.showerror("❌ 推送失敗", "請檢查權限或遠端是否允許推送。")
+    else:
+        messagebox.showinfo("✅ 成功", "Push 成功！")
 
         
 def git_clone():
