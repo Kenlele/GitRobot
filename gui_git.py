@@ -44,8 +44,30 @@ def git_remote_add():
         messagebox.showerror("❌ 錯誤", "請輸入 GitHub Repo 連結！")
 
 def git_pull():
-    """Pull 最新版本"""
-    run_git_command("git pull origin main")
+    """從遠端拉取最新版本"""
+    repo_url = entry_url.get().strip()  # 使用者輸入的 GitHub 連結
+    branch = entry_branch.get().strip()  # 使用者輸入的分支名稱
+
+    if not repo_url:
+        messagebox.showerror("❌ 錯誤", "請輸入 GitHub Repo 連結！")
+        return
+
+    if not branch:
+        branch = "main"  # 預設為 main 分支
+
+    # 確保有遠端設定
+    remote_check = run_git_command("git remote -v")
+    if isinstance(remote_check, str) and "origin" not in remote_check:
+        run_git_command(f"git remote add origin {repo_url}")
+
+    # 執行 Pull 指令
+    pull_output = run_git_command(f"git pull origin {branch} --allow-unrelated-histories")
+
+    # 檢查輸出是否有錯誤
+    if isinstance(pull_output, str) and "error" in pull_output.lower():
+        messagebox.showerror("❌ Pull 失敗", "請檢查是否有權限或遠端是否允許拉取！")
+    else:
+        messagebox.showinfo("✅ Pull 成功", f"已成功拉取最新版本：{branch}")
 
 def git_push():
     """Push 到 GitHub，確保遠端連結正確，並允許使用者輸入 commit 訊息"""
