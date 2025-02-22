@@ -150,7 +150,7 @@ label_pull_hint.pack()
 frame_branch = tk.Frame(frame_push, bg="white")
 frame_branch.pack()
 
-label_branch = tk.Label(frame_branch, text="🌿 輸入你要推送的 Branch:", bg="white", font=("Arial", 10))
+label_branch = tk.Label(frame_branch, text="🌿 輸入你要推送的 Branch:(若空白就是預設main)", bg="white", font=("Arial", 10))
 label_branch.pack(side="left")
 
 entry_branch = tk.Entry(frame_branch, width=20, font=("Arial", 12), state="disabled")
