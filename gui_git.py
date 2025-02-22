@@ -2,19 +2,19 @@ import os
 import subprocess
 import tkinter as tk
 from tkinter import filedialog, messagebox
+import subprocess
 
 repo_path = ""
 git_initialized = False  # 紀錄是否執行了 git init
 
+
 def run_git_command(command):
-    """執行 Git 指令"""
-    process = subprocess.run(command, shell=True, cwd=repo_path, capture_output=True, text=True)
-    if process.returncode == 0:
-        messagebox.showinfo("✅ 成功", f"執行成功：\n{process.stdout}")
-        return True
-    else:
-        messagebox.showerror("❌ 錯誤", f"執行失敗：\n{process.stderr}")
-        return False
+    """執行 Git 指令並回傳輸出"""
+    try:
+        result = subprocess.run(command, shell=True, capture_output=True, text=True)
+        return result.stdout  # 回傳標準輸出
+    except Exception as e:
+        return str(e)
 
 def select_folder():
     """選擇本地端專案資料夾"""
