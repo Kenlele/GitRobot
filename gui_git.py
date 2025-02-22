@@ -46,12 +46,23 @@ def git_pull():
     run_git_command("git pull origin main")
 
 def git_push():
-    """Push 到 GitHub，使用者可選擇 Branch"""
+    """Push 到 GitHub，先檢查未提交的變更"""
     branch = entry_branch.get()
     if not branch:
         messagebox.showerror("❌ 錯誤", "請輸入分支名稱！")
         return
-    run_git_command(f"git add . && git commit -m 'Auto commit' && git push origin {branch}")
+
+    # 檢查是否有未提交的變更
+    run_git_command("git add .")
+    success_commit = run_git_command(f"git commit -m 'Auto commit'")
+    
+    if "nothing to commit" in success_commit:
+        messagebox.showinfo("✅ 已同步", "沒有變更可提交，直接 Push！")
+
+    # 執行 Push
+    success_push = run_git_command(f"git push origin {branch}")
+    if "error" in success_push:
+        messagebox.showerror("❌ 推送失敗", "請檢查權限或遠端是否允許推送。")
 
 def git_clone():
     """Clone GitHub Repo"""
