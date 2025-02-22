@@ -1,0 +1,3 @@
+([('GitHubTool',
+   '/Users/yonglinlai/Desktop/Git機器人/dist/GitHubTool',
+   'EXECUTABLE')],)
