@@ -2,19 +2,20 @@ import os
 import subprocess
 import tkinter as tk
 from tkinter import filedialog, messagebox
-import subprocess
 
 repo_path = ""
 git_initialized = False  # 紀錄是否執行了 git init
 
-
 def run_git_command(command):
-    """執行 Git 指令並回傳輸出"""
-    try:
-        result = subprocess.run(command, shell=True, capture_output=True, text=True)
-        return result.stdout  # 回傳標準輸出
-    except Exception as e:
-        return str(e)
+    """執行 Git 指令"""
+    
+    process = subprocess.run(command, shell=True, cwd=repo_path, capture_output=True, text=True)
+    if process.returncode == 0:
+        messagebox.showinfo("✅ 成功", f"執行成功：\n{process.stdout}")
+        return True
+    else:
+        messagebox.showerror("❌ 錯誤", f"執行失敗：\n{process.stderr}")
+        return False
 
 def select_folder():
     """選擇本地端專案資料夾"""
@@ -54,16 +55,18 @@ def git_push():
 
     # 檢查是否有未提交的變更
     run_git_command("git add .")
-    success_commit = run_git_command(f"git commit -m 'Auto commit'")
-    
-    if "nothing to commit" in success_commit:
+    success_commit = run_git_command("git commit -m 'Auto commit'")
+
+    # 這裡要確保 success_commit 是字串
+    if success_commit and isinstance(success_commit, str) and "nothing to commit" in success_commit:
         messagebox.showinfo("✅ 已同步", "沒有變更可提交，直接 Push！")
 
     # 執行 Push
     success_push = run_git_command(f"git push origin {branch}")
-    if "error" in success_push:
+    if success_push and isinstance(success_push, str) and "error" in success_push:
         messagebox.showerror("❌ 推送失敗", "請檢查權限或遠端是否允許推送。")
 
+        
 def git_clone():
     """Clone GitHub Repo"""
     repo_url = entry_url_clone.get()
