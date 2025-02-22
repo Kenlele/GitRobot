@@ -3,6 +3,8 @@ import subprocess
 import tkinter as tk
 from tkinter import filedialog, messagebox
 
+#made by ken on 2025/02/23 --持續更新中～～
+
 repo_path = ""
 git_initialized = False  # 紀錄是否執行了 git init
 
