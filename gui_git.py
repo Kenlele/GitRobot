@@ -46,20 +46,25 @@ def git_pull():
     run_git_command("git pull origin main")
 
 def git_push():
-    """Push 到 GitHub，確保遠端連結正確"""
+    """Push 到 GitHub，確保遠端連結正確，並允許使用者輸入 commit 訊息"""
     repo_url = entry_url.get().strip()   # 使用者輸入的 GitHub 連結
     branch = entry_branch.get().strip()  # 使用者輸入的分支名稱
+    commit_message = commit_message_entry.get().strip()  # 使用者輸入的 commit 訊息
+
     if not branch:
-        branch = "main"  # 預設 main 分支
+        branch = "main"  # 預設推送到 main 分支
 
     if not repo_url:
         messagebox.showerror("❌ 錯誤", "請輸入 GitHub Repo 連結！")
         return
 
-    # **1️⃣ 初始化 Git**
+    if not commit_message:
+        commit_message = "Auto commit"  # 預設 commit 訊息
+
+    # **1️⃣ 確保初始化**
     run_git_command("git init")
 
-    # **2️⃣ 確保有遠端倉庫**
+    # **2️⃣ 確保遠端存在**
     remote_check = run_git_command("git remote -v")
     if isinstance(remote_check, str) and "origin" not in remote_check:
         run_git_command(f"git remote add origin {repo_url}")
@@ -69,24 +74,25 @@ def git_push():
     if isinstance(branches, str) and branch not in branches:
         run_git_command(f"git checkout -b {branch}")
 
-    # **4️⃣ 先 Pull 遠端，避免衝突**
+    # **4️⃣ Pull 避免衝突**
     pull_result = run_git_command(f"git pull origin {branch} --allow-unrelated-histories")
     if isinstance(pull_result, str) and "error" in pull_result.lower():
         messagebox.showerror("❌ Pull 失敗", "請確認遠端是否允許 Pull！")
 
-    # **5️⃣ 檢查是否有未提交的變更**
+    # **5️⃣ 檢查是否有未提交變更**
     run_git_command("git add .")
-    commit_output = run_git_command("git commit -m 'Auto commit'")
-    if isinstance(commit_output, str) and "nothing to commit" in commit_output:
-        messagebox.showinfo("✅ 沒有變更", "沒有變更可提交，直接 Push！")
+    status_output = run_git_command("git status -s")  # 查看變更
+    if not status_output.strip():
+        messagebox.showinfo("✅ 沒有變更", "沒有新的變更可提交，跳過 commit！")
+    else:
+        run_git_command(f'git commit -m "{commit_message}"')
 
     # **6️⃣ 執行 Push**
     push_output = run_git_command(f"git push -u origin {branch}")
     if isinstance(push_output, str) and "error" in push_output:
         messagebox.showerror("❌ 推送失敗", "請檢查權限或遠端是否允許推送。")
     else:
-        messagebox.showinfo("✅ 成功", "Push 成功！")
-
+        messagebox.showinfo("✅ 成功", f"Push 成功！分支：{branch}\nCommit 訊息：{commit_message}")
         
 def git_clone():
     """Clone GitHub Repo"""
@@ -101,6 +107,11 @@ root = tk.Tk()
 root.title("GitHub 小機器人")
 root.geometry("650x520")  # 調整視窗大小
 root.configure(bg="#F8F8F8")  # 設定背景色
+# Commit 訊息輸入框
+tk.Label(root, text="輸入 commit 訊息:").pack()
+commit_message_entry = tk.Entry(root, width=50)
+commit_message_entry.pack()
+commit_message_entry.insert(0, "Auto commit")  # 預設 commit 訊息
 
 # **第一區**（Push 專案到 GitHub）
 frame_push = tk.LabelFrame(root, text="📤 我在本地端寫了一個專案，想要推到 GitHub", padx=10, pady=10, bg="white", font=("Arial", 12, "bold"))
