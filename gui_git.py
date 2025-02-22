@@ -129,7 +129,7 @@ def git_clone():
 # 設定 Tkinter 介面
 root = tk.Tk()
 root.title("GitHub 小機器人")
-root.geometry("650x520")  # 調整視窗大小
+root.geometry("650x650")  # 調整視窗大小
 root.configure(bg="#F8F8F8")  # 設定背景色
 # Commit 訊息輸入框
 tk.Label(root, text="輸入 commit 訊息:").pack()
